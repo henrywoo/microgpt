@@ -8,7 +8,14 @@
 
 ## 🎯 Overview
 
-microGPT is a lightweight implementation of GPT (Generative Pre-trained Transformer) language models, inspired by [NanoGPT](https://github.com/karpathy/nanoGPT) but following the same design philosophy as **[microBERT](https://github.com/henrywoo/microbert)**: **significantly reducing computational resource requirements while maintaining model performance**.
+microGPT is a **character-level** implementation of GPT (Generative Pre-trained Transformer) language models, inspired by [NanoGPT](https://github.com/karpathy/nanoGPT) but following the same design philosophy as **[microBERT](https://github.com/henrywoo/microbert)**: **significantly reducing computational resource requirements while maintaining model performance**.
+
+**🔤 Key Design Choice: Character-Level Tokenization**
+Unlike traditional GPT models that use subword or word-level tokenization, microGPT operates at the **character level** - each token represents a single character (A-Z, a-z, 0-9, punctuation, spaces). This approach:
+- Simplifies the architecture and reduces vocabulary size (~65 characters vs. 50k+ subword tokens)
+- Eliminates the need for complex tokenization schemes
+- Makes the model more interpretable and easier to debug
+- Requires longer sequences but provides finer-grained text generation control
 
 ## ✨ Key Features
 
@@ -16,6 +23,7 @@ microGPT is a lightweight implementation of GPT (Generative Pre-trained Transfor
 - **Model Compression**: Significantly reduced parameter count through carefully designed architecture
 - **Computational Optimization**: Flash Attention support for improved inference efficiency
 - **Memory Efficient**: Optimized for resource-constrained environments
+- **Character-Level Simplicity**: Minimal vocabulary size (~65 characters) eliminates complex tokenization overhead
 
 ### 🚀 **Resource Adaptation**
 - **Mobile-Friendly**: Runs on laptops, embedded devices, and mobile platforms
@@ -29,6 +37,7 @@ microGPT is a lightweight implementation of GPT (Generative Pre-trained Transfor
 - **Flash Attention**: Efficient attention computation for PyTorch 2.0+
 - **Weight Tying**: Token embedding and output layer weight sharing
 - **Layer Normalization**: Optional bias support
+- **Character-Level Tokenization**: Direct character-to-integer mapping without complex tokenization schemes
 
 ### Default Configuration (Lightweight)
 ```python
@@ -45,7 +54,7 @@ microGPT is designed to work as a standalone package. After installation, you ca
 
 ### 📊 Dataset Preparation
 
-microGPT comes with a built-in Shakespeare dataset for character-level language modeling. The dataset preparation script and raw text data are included in the package for easy access. The dataset preparation process:
+microGPT comes with a built-in Shakespeare dataset for **character-level language modeling**. The dataset preparation script and raw text data are included in the package for easy access. The dataset preparation process:
 
 1. **Uses** the Shakespeare text included in the package
 2. **Tokenizes** characters into integers (vocabulary size: ~65 characters)
@@ -86,7 +95,7 @@ python -m microgpt.pretrain.clm_pretrain_v0
 **No git repo checkout required!** After installation, you can run training from anywhere.
 
 #### 1. Prepare the Dataset
-First, prepare the Shakespeare dataset for character-level language modeling:
+First, prepare the Shakespeare dataset for **character-level language modeling**:
 
 ```bash
 # From any directory where you want to store the data
@@ -99,6 +108,12 @@ This script will:
 - **Splits** data into training (90%) and validation (10%) sets
 - **Saves** processed data in `./data/shakespeare_char/` relative to your current working directory
 - **Shows** the exact path where data is saved for easy reference
+
+**🔤 Character-Level Tokenization Details:**
+- Each character (A-Z, a-z, 0-9, punctuation, space) gets a unique integer ID
+- No complex tokenization schemes like BPE (Byte Pair Encoding) or WordPiece
+- Direct character-to-integer mapping: `'H' → 72, 'e' → 101, 'l' → 108, 'l' → 108, 'o' → 111`
+- Vocabulary size is typically ~65 characters for English text
 
 #### 2. Start Training
 
@@ -125,7 +140,7 @@ config = MicroGPTConfig(
     n_head=6, 
     n_embd=384,
     block_size=256,
-    vocab_size=65  # Must match the vocabulary size in meta.pkl
+    vocab_size=65  # Must match the vocabulary size in meta.pkl (typically ~65 for character-level)
 )
 
 # Initialize model
@@ -134,20 +149,21 @@ model = MicroGPT(config)
 # Generate text
 # Note: For meaningful text generation, the model should be trained first
 # This example shows the structure, but untrained models will generate random text
+# Input should be character-level token IDs (e.g., encoded text from meta.pkl)
 generated = model.generate(
     idx=torch.tensor([[1, 2, 3]]), 
     max_new_tokens=50,
     temperature=0.8
 )
 
-# Decode the generated text
+# Decode the generated text (converts character-level token IDs back to characters)
 generated_text = MicroGPT.decode_text(generated[0])
 print(f"Generated text: {generated_text}")
 ```
 
 ### 🎭 Sampling from Trained Models
 
-After training a model, you can generate text samples using the `sample.py` script. This script loads a trained checkpoint and generates text based on your specifications.
+After training a model, you can generate text samples using the `sample.py` script. This script loads a trained checkpoint and generates text based on your specifications. **The sampling process works at the character level**, generating one character at a time based on the learned character-level patterns.
 
 #### 🚀 Basic Usage
 

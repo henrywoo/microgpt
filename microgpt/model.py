@@ -1,10 +1,3 @@
-"""
-Full definition of a GPT Language Model, all of it in this single file.
-References:
-1) huggingface/transformers PyTorch implementation:
-https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
-"""
-
 import math
 import inspect
 from dataclasses import dataclass
@@ -106,7 +99,7 @@ class Block(nn.Module):
 @dataclass
 class MicroGPTConfig:
     block_size: int = 1024
-    vocab_size: int = 50304 # default vocab_size padded to nearest multiple of 64 for efficiency
+    vocab_size: int = 65 # default vocab_size for character-level language modeling (typical English character set)
     n_layer: int = 12
     n_head: int = 12
     n_embd: int = 768
