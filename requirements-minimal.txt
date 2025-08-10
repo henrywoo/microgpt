@@ -1,0 +1,12 @@
+# Minimal requirements for production use
+# Install with: pip install -r requirements-minimal.txt
+
+# Core PyTorch
+torch>=2.0.0
+
+# Essential utilities
+numpy>=1.21.0
+tqdm>=4.64.0
+
+# Tokenization (if needed)
+tiktoken>=0.5.0

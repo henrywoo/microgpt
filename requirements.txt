@@ -1,0 +1,23 @@
+# Core dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Data processing and utilities
+numpy>=1.21.0
+tqdm>=4.64.0
+datasets>=2.12.0
+
+# NLP and tokenization
+tiktoken>=0.5.0
+transformers>=4.30.0
+
+# Training and optimization
+accelerate>=0.20.0
+wandb>=0.15.0
+
+# Optional dependencies for enhanced functionality
+# Uncomment if needed:
+# sentencepiece>=0.1.99
+# protobuf>=3.20.0
+# regex>=2022.1.18
