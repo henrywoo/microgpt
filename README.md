@@ -54,8 +54,20 @@ microGPT comes with a built-in Shakespeare dataset for character-level language 
 
 ### 📦 Installation
 
+#### Development Installation (for contributors)
 ```bash
+# Clone the repository first
+git clone https://github.com/henrywoo/microgpt.git
+cd microgpt
+
+# Install in editable mode for development
 pip install -e .
+```
+
+#### Production Installation (for users)
+```bash
+# Install directly from PyPI
+pip install microgpt
 ```
 
 ### 🎓 Training
