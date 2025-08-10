@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 import os
+import sys
 
 # Read the README file for long description
 def read_readme():
@@ -30,7 +31,7 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
@@ -42,7 +43,7 @@ setup(
         "Topic :: Text Processing :: Linguistic",
     ],
     python_requires=">=3.8",
-    install_requires=read_requirements(),
+    install_requires=["setuptools>=65.0.0"] + read_requirements(),
     include_package_data=True,
     zip_safe=False,
     keywords=[

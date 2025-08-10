@@ -40,17 +40,48 @@ block_size = 256 # 256 token context window
 
 ## Quick Start
 
+### Dataset Preparation
+
+microGPT comes with a built-in Shakespeare dataset for character-level language modeling. The dataset preparation script is included in the package for easy access. The dataset preparation process:
+
+1. **Downloads** the Shakespeare text from GitHub
+2. **Tokenizes** characters into integers (vocabulary size: ~65 characters)
+3. **Splits** data into training (90%) and validation (10%) sets
+4. **Saves** processed data in binary format for fast loading
+
 ### Installation
+
 ```bash
-pip install torch torchvision torchaudio
 pip install -e .
 ```
 
 ### Training
+
+#### 1. Prepare the Dataset
+First, prepare the Shakespeare dataset for character-level language modeling:
+
+```bash
+# From the project root directory
+python -m microgpt.prepare_dataset
+```
+
+This script will:
+- Download the Shakespeare dataset from GitHub
+- Convert characters to integer tokens
+- Create train/validation splits (90%/10%)
+- Save processed data as `train.bin`, `val.bin`, and `meta.pkl`
+
+#### 2. Start Training
 ```bash
 cd microgpt/pretrain
 python clm_train_v0.py
 ```
+
+The training script will automatically:
+- Load the prepared dataset
+- Initialize the microGPT model with default configuration
+- Train using the specified hyperparameters
+- Save checkpoints and generate sample text
 
 ### Usage
 ```python
@@ -127,13 +158,20 @@ eval_interval = 100
 ```
 microgpt/
 ├── microgpt/
-│   ├── model.py          # Core model implementation
+│   ├── model.py              # Core model implementation
+│   ├── prepare_dataset.py    # Dataset preparation script
 │   └── pretrain/
 │       ├── clm_train_v0.py  # Training script
 │       ├── config.py         # Configuration management
 │       └── configurator.py   # Configuration utilities
-├── setup.py              # Installation configuration
-└── README.md             # Project documentation
+├── data/
+│   └── shakespeare_char/
+│       ├── input.txt         # Raw Shakespeare text
+│       ├── train.bin         # Training data (generated)
+│       ├── val.bin           # Validation data (generated)
+│       └── meta.pkl          # Vocabulary metadata (generated)
+├── setup.py                  # Installation configuration
+└── README.md                 # Project documentation
 ```
 
 ## Contributing
