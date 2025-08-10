@@ -14,7 +14,7 @@ def read_requirements():
 
 setup(
     name="microgpt",
-    version="0.0.2.dev1",
+    version="0.0.2",
     author="Wu Fuheng",
     author_email="wufuheng@gmail.com",
     description="Lightweight GPT implementation designed for resource-constrained environments",
