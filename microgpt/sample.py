@@ -9,6 +9,7 @@ import tiktoken
 from microgpt.model import GPTConfig, GPT
 
 # -----------------------------------------------------------------------------
+# Default sampling configuration
 init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
 out_dir = 'out' # ignored if init_from is not 'resume'
 start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
@@ -20,10 +21,14 @@ seed = 1337
 device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
 dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
 compile = False # use PyTorch 2.0 to compile the model to be faster
-# Load configuration from config.py
-import os
+
+# Load configuration from pretrain/config.py to override defaults
 config_path = os.path.join(os.path.dirname(__file__), 'pretrain', 'config.py')
-exec(open(config_path).read()) # overrides from command line or config file
+if os.path.exists(config_path):
+    exec(open(config_path).read())
+    print(f"Loaded configuration from: {config_path}")
+else:
+    print(f"Warning: Config file not found at {config_path}, using defaults")
 # -----------------------------------------------------------------------------
 
 torch.manual_seed(seed)
