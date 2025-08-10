@@ -10,7 +10,7 @@ import torch
 from microgpt.model import MicroGPTConfig, MicroGPT
 
 # -----------------------------------------------------------------------------
-# default config values designed to train a gpt2 (124M) on OpenWebText
+# default config values designed to train a character-level language model on OpenWebText
 # I/O
 out_dir = 'out'
 eval_interval = 2000
@@ -119,7 +119,6 @@ best_val_loss = 1e9
 
 # model init - always initialize a new model from scratch
 print("Initializing a new model from scratch")
-print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
 model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=block_size,
                   bias=bias, vocab_size=50304, dropout=dropout) # start with model_args from command line
 gptconf = MicroGPTConfig(**model_args)
@@ -132,7 +131,7 @@ if block_size < model.config.block_size:
 model.to(device)
 
 # initialize a GradScaler. If enabled=False scaler is a no-op
-scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
+scaler = torch.amp.GradScaler('cuda', enabled=(dtype == 'float16'))
 
 # optimizer
 optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)

@@ -159,7 +159,6 @@ python -m microgpt.sample
 ## Acknowledgments
 
 - [NanoGPT](https://github.com/karpathy/nanoGPT) - Original codebase
-- [OpenAI GPT-2](https://github.com/openai/gpt-2) - Architecture reference
 - [Hugging Face Transformers](https://github.com/huggingface/transformers) - Implementation reference
 - [microBERT](https://github.com/henrywoo/microbert) - Design philosophy inspiration for lightweight architecture
 

@@ -64,7 +64,7 @@ if compile:
 from hiq.vis import print_model
 print_model(model)
 
-# Try to use the package's meta.pkl first, fall back to data directory or GPT-2 encodings
+# Try to use the package's meta.pkl first, fall back to data directory or default encodings
 load_meta = False
 meta_path = None
 
