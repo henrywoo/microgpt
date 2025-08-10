@@ -27,6 +27,7 @@ config_path = os.path.join(os.path.dirname(__file__), 'pretrain', 'config.py')
 if os.path.exists(config_path):
     exec(open(config_path).read())
     print(f"Loaded configuration from: {config_path}")
+    print(f"Using out_dir: {out_dir}")
 else:
     print(f"Warning: Config file not found at {config_path}, using defaults")
 # -----------------------------------------------------------------------------
@@ -43,7 +44,12 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 if init_from == 'resume':
     # init from a model saved in a specific directory
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
-    checkpoint = torch.load(ckpt_path, map_location=device)
+    print(f"Loading checkpoint from: {ckpt_path}")
+    if not os.path.exists(ckpt_path):
+        print(f"Error: Checkpoint not found at {ckpt_path}")
+        print(f"Make sure you have trained a model first, or check the 'out_dir' in your config")
+        exit(1)
+    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=True)
     gptconf = GPTConfig(**checkpoint['model_args'])
     model = GPT(gptconf)
     state_dict = checkpoint['model']
