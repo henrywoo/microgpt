@@ -104,6 +104,7 @@ The training script will automatically:
 ### 🔌 API Usage
 
 ```python
+import torch
 from microgpt.model import GPT, GPTConfig
 
 # Create configuration
