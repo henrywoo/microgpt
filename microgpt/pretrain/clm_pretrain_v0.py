@@ -19,10 +19,7 @@ eval_iters = 200
 eval_only = False # if True, script exits right after the first eval
 always_save_checkpoint = True # if True, always save a checkpoint after each eval
 init_from = 'scratch' # 'scratch' or 'resume' or 'gpt2*'
-# wandb logging
-wandb_log = False # disabled by default
-wandb_project = 'owt'
-wandb_run_name = 'gpt2' # 'run' + str(time.time())
+
 # data
 dataset = 'openwebtext'
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
@@ -50,20 +47,35 @@ min_lr = 6e-5 # minimum learning rate, should be ~= learning_rate/10 per Chinchi
 device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
 dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
 compile = True # use PyTorch 2.0 to compile the model to be faster
-# -----------------------------------------------------------------------------
-config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 
 def load_config():
-    """Load configuration overrides from configurator.py"""
+    """Load configuration overrides from config.py"""
     try:
-        exec(open('configurator.py').read()) # overrides from command line or config file
+        # Get the directory where this script is located
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(script_dir, 'config.py')
+        
+        # Read and execute the config file
+        with open(config_path, 'r') as f:
+            config_content = f.read()
+        
+        # Execute the config content in the current globals
+        exec(config_content, globals())
+        
+        print(f"Configuration loaded from {config_path}")
+        print(f"Dataset: {dataset}")
+        print(f"Out dir: {out_dir}")
+        print(f"Batch size: {batch_size}")
+        print(f"Block size: {block_size}")
     except FileNotFoundError:
-        pass  # configurator.py is optional
+        print(f"config.py not found at {config_path}, using default configuration")
+        pass  # config.py is optional
 
-# Only load config when running the script directly, not during import
-if __name__ == "__main__":
-    load_config()
+# Load configuration immediately when module is imported
+load_config()
 
+# -----------------------------------------------------------------------------
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 # -----------------------------------------------------------------------------
 
@@ -78,15 +90,14 @@ print(f"tokens per iteration will be: {tokens_per_iter:,}")
 os.makedirs(out_dir, exist_ok=True)
 torch.manual_seed(1337 + seed_offset)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
-torch.backends.cudnn.allow_tf32 = True # allow tf32 on cudnn
+torch.backends.cudnn.allow_tf32 = True # allow tf32 on matmul
 device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
 # note: float16 data type will automatically use a GradScaler
 ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
-# poor man's data loader
-data_dir = os.path.join('data', dataset)
-def get_batch(split):
+# poor man's data loader - data_dir will be set in main() after config is loaded
+def get_batch(split, data_dir):
     # We recreate np.memmap every batch to avoid a memory leak, as per
     # https://stackoverflow.com/questions/45132940/numpy-memmap-memory-usage-want-to-iterate-once/61472122#61472122
     if split == 'train':
@@ -107,25 +118,13 @@ def get_batch(split):
 iter_num = 0
 best_val_loss = 1e9
 
-# attempt to derive vocab_size from the dataset
-meta_path = os.path.join(data_dir, 'meta.pkl')
-meta_vocab_size = None
-if os.path.exists(meta_path):
-    with open(meta_path, 'rb') as f:
-        meta = pickle.load(f)
-    meta_vocab_size = meta['vocab_size']
-    print(f"found vocab_size = {meta_vocab_size} (inside {meta_path})")
-
 # model init
 model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=block_size,
-                  bias=bias, vocab_size=None, dropout=dropout) # start with model_args from command line
+                  bias=bias, vocab_size=50304, dropout=dropout) # start with model_args from command line
 if init_from == 'scratch':
     # init a new model from scratch
     print("Initializing a new model from scratch")
-    # determine the vocab size we'll use for from-scratch training
-    if meta_vocab_size is None:
-        print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
-    model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else 50304
+    print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
     gptconf = GPTConfig(**model_args)
     model = GPT(gptconf)
 elif init_from == 'resume':
@@ -165,12 +164,6 @@ if block_size < model.config.block_size:
     model_args['block_size'] = block_size # so that the checkpoint will have the right value
 model.to(device)
 
-try:
-    from hiq.vis import print_model
-    print_model(model)
-except ImportError:
-    print("hiq.vis not available, skipping model visualization")
-
 # initialize a GradScaler. If enabled=False scaler is a no-op
 scaler = torch.cuda.amp.GradScaler(enabled=(dtype == 'float16'))
 
@@ -188,13 +181,13 @@ if compile:
 
 # helps estimate an arbitrarily accurate loss over either split using many batches
 @torch.no_grad()
-def estimate_loss():
+def estimate_loss(data_dir):
     out = {}
     model.eval()
     for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
-            X, Y = get_batch(split)
+            X, Y = get_batch(split, data_dir)
             with ctx:
                 logits, loss = model(X, Y)
             losses[k] = loss.item()
@@ -216,16 +209,43 @@ def get_lr(it):
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio)) # coeff ranges 0..1
     return min_lr + coeff * (learning_rate - min_lr)
 
-# logging
-if wandb_log and master_process:
-    import wandb
-    wandb.init(project=wandb_project, name=wandb_run_name, config=config)
-
-
 
 def main():
+    global iter_num, best_val_loss, model, optimizer
+    
     # training loop
-    X, Y = get_batch('train') # fetch the very first batch
+    # data_dir will be set here after config is loaded
+    data_dir = os.path.join('data', dataset)
+    
+    # attempt to derive vocab_size from the dataset
+    meta_path = os.path.join(data_dir, 'meta.pkl')
+    meta_vocab_size = None
+    if os.path.exists(meta_path):
+        with open(meta_path, 'rb') as f:
+            meta = pickle.load(f)
+        meta_vocab_size = meta['vocab_size']
+        print(f"found vocab_size = {meta_vocab_size} (inside {meta_path})")
+    
+    # update model_args with vocab_size if found
+    if meta_vocab_size is not None:
+        model_args['vocab_size'] = meta_vocab_size
+        # recreate the model with the correct vocab_size
+        gptconf = GPTConfig(**model_args)
+        model = GPT(gptconf)
+        model.to(device)
+        # recompile if needed
+        if compile:
+            print("recompiling the model with updated vocab_size...")
+            unoptimized_model = model
+            model = torch.compile(model)
+        # reconfigure optimizer
+        optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)
+    
+    # Print the final model structure after all potential modifications
+    from hiq.vis import print_model
+    print_model(model)
+    
+    X, Y = get_batch('train', data_dir) # fetch the very first batch
     t0 = time.time()
     local_iter_num = 0 # number of iterations in the lifetime of this process
     raw_model = model # no DDP wrapper needed
@@ -239,16 +259,9 @@ def main():
 
         # evaluate the loss on train/val sets and write checkpoints
         if iter_num % eval_interval == 0 and master_process:
-            losses = estimate_loss()
+            losses = estimate_loss(data_dir)
             print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
-            if wandb_log:
-                wandb.log({
-                    "iter": iter_num,
-                    "train/loss": losses['train'],
-                    "val/loss": losses['val'],
-                    "lr": lr,
-                    "mfu": running_mfu*100, # convert to percentage
-                })
+
             if losses['val'] < best_val_loss or always_save_checkpoint:
                 best_val_loss = losses['val']
                 if iter_num > 0:
@@ -272,7 +285,7 @@ def main():
                 logits, loss = model(X, Y)
                 loss = loss / gradient_accumulation_steps # scale the loss to account for gradient accumulation
             # immediately async prefetch next batch while model is doing the forward pass on the GPU
-            X, Y = get_batch('train')
+            X, Y = get_batch('train', data_dir)
             # backward pass, with gradient scaling if training in fp16
             scaler.scale(loss).backward()
         # clip the gradient

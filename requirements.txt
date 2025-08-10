@@ -14,7 +14,6 @@ transformers>=4.30.0
 
 # Training and optimization
 accelerate>=0.20.0
-wandb>=0.15.0
 
 # Optional dependencies for enhanced functionality
 # Uncomment if needed:

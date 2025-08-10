@@ -40,14 +40,17 @@ block_size = 256 # 256 token context window
 
 ## Quick Start
 
+### Package-Based Training
+microGPT is designed to work as a standalone package. After installation, you can train models from any directory without needing the source code.
+
 ### Dataset Preparation
 
-microGPT comes with a built-in Shakespeare dataset for character-level language modeling. The dataset preparation script is included in the package for easy access. The dataset preparation process:
+microGPT comes with a built-in Shakespeare dataset for character-level language modeling. The dataset preparation script and raw text data are included in the package for easy access. The dataset preparation process:
 
-1. **Downloads** the Shakespeare text from GitHub
+1. **Uses** the Shakespeare text included in the package
 2. **Tokenizes** characters into integers (vocabulary size: ~65 characters)
 3. **Splits** data into training (90%) and validation (10%) sets
-4. **Saves** processed data in binary format for fast loading
+4. **Saves** processed data in `./data/shakespeare_char/` relative to your current working directory
 
 ### Installation
 
@@ -57,28 +60,43 @@ pip install -e .
 
 ### Training
 
+#### Complete Training Workflow
+You can train microGPT from any directory using the installed package:
+
+```bash
+# 1. Prepare the dataset (creates ./data/shakespeare_char/)
+python -m microgpt.prepare_dataset
+
+# 2. Start training (uses the prepared dataset)
+python -m microgpt.pretrain.clm_pretrain_v0
+```
+
+**No git repo checkout required!** After installation, you can run training from anywhere.
+
 #### 1. Prepare the Dataset
 First, prepare the Shakespeare dataset for character-level language modeling:
 
 ```bash
-# From the project root directory
+# From any directory where you want to store the data
 python -m microgpt.prepare_dataset
 ```
 
 This script will:
-- Download the Shakespeare dataset from GitHub
-- Convert characters to integer tokens
-- Create train/validation splits (90%/10%)
-- Save processed data as `train.bin`, `val.bin`, and `meta.pkl`
+- **Uses** the Shakespeare text included in the package
+- **Tokenizes** characters into integers (vocabulary size: ~65 characters)
+- **Splits** data into training (90%) and validation (10%) sets
+- **Saves** processed data in `./data/shakespeare_char/` relative to your current working directory
+- **Shows** the exact path where data is saved for easy reference
 
 #### 2. Start Training
+
 ```bash
-cd microgpt/pretrain
-python clm_train_v0.py
+# From any directory, run the training script directly from the package
+python -m microgpt.pretrain.clm_pretrain_v0
 ```
 
 The training script will automatically:
-- Load the prepared dataset
+- Load the prepared dataset from `./data/shakespeare_char/` (relative to current directory)
 - Initialize the microGPT model with default configuration
 - Train using the specified hyperparameters
 - Save checkpoints and generate sample text
@@ -157,22 +175,26 @@ eval_interval = 100
 
 ```
 microgpt/
-├── microgpt/
+├── microgpt/                 # Main package (installable)
 │   ├── model.py              # Core model implementation
 │   ├── prepare_dataset.py    # Dataset preparation script
+│   ├── input.txt             # Shakespeare text data (included)
 │   └── pretrain/
 │       ├── clm_train_v0.py  # Training script
 │       ├── config.py         # Configuration management
 │       └── configurator.py   # Configuration utilities
-├── data/
+├── data/                     # Generated data (created during training)
 │   └── shakespeare_char/
-│       ├── input.txt         # Raw Shakespeare text
 │       ├── train.bin         # Training data (generated)
 │       ├── val.bin           # Validation data (generated)
 │       └── meta.pkl          # Vocabulary metadata (generated)
 ├── setup.py                  # Installation configuration
 └── README.md                 # Project documentation
 ```
+
+**Usage from installed package:**
+- `python -m microgpt.prepare_dataset` - Prepare dataset
+- `python -m microgpt.pretrain.clm_pretrain_v0` - Train model
 
 ## Contributing
 

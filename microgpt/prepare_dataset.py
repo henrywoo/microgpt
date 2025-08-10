@@ -6,19 +6,15 @@ encoder and decoder and some other related info.
 """
 import os
 import pickle
-import requests
 import numpy as np
 
-# download the tiny shakespeare dataset
-# Get the data directory path (two levels up from the package)
-data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'shakespeare_char')
+# Create data directory relative to current working directory
+data_dir = os.path.join(os.getcwd(), 'data', 'shakespeare_char')
 os.makedirs(data_dir, exist_ok=True)
+print(f"Saving processed data to: {os.path.abspath(data_dir)}")
 
-input_file_path = os.path.join(data_dir, 'input.txt')
-if not os.path.exists(input_file_path):
-    data_url = 'https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt'
-    with open(input_file_path, 'w') as f:
-        f.write(requests.get(data_url).text)
+# Use the input.txt file that's included in the package
+input_file_path = os.path.join(os.path.dirname(__file__), 'input.txt')
 
 with open(input_file_path, 'r') as f:
     data = f.read()

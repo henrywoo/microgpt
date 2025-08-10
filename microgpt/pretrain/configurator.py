@@ -1,47 +1,36 @@
-"""
-Poor Man's Configurator. Probably a terrible idea. Example usage:
-$ python train.py config/override_file.py --batch_size=32
-this will first run config/override_file.py, then override batch_size to 32
+# configurator.py - imports configuration from config.py
+# This file is used by clm_pretrain_v0.py to load configuration overrides
 
-The code in this file will be run as follows from e.g. train.py:
->>> exec(open('configurator.py').read())
-
-So it's not a Python module, it's just shuttling this code away from train.py
-The code in this script then overrides the globals()
-
-I know people are not going to love this, I just really dislike configuration
-complexity and having to prepend config. to every single variable. If someone
-comes up with a better simple Python solution I am all ears.
-"""
-
+import os
 import sys
-from ast import literal_eval
 
-for arg in sys.argv[1:]:
-    if '=' not in arg:
-        # assume it's the name of a config file
-        assert not arg.startswith('--')
-        config_file = arg
-        print(f"Overriding config with {config_file}:")
-        with open(config_file) as f:
-            print(f.read())
-        exec(open(config_file).read())
-    else:
-        # assume it's a --key=value argument
-        assert arg.startswith('--')
-        key, val = arg.split('=')
-        key = key[2:]
-        if key in globals():
-            try:
-                # attempt to eval it it (e.g. if bool, number, or etc)
-                attempt = literal_eval(val)
-            except (SyntaxError, ValueError):
-                # if that goes wrong, just use the string
-                attempt = val
-            # ensure the types match ok
-            assert type(attempt) == type(globals()[key])
-            # cross fingers
-            print(f"Overriding: {key} = {attempt}")
-            globals()[key] = attempt
-        else:
-            raise ValueError(f"Unknown config key: {key}")
+# Get the directory where this script is located
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(script_dir, 'config.py')
+
+# Also try relative path from current working directory
+if not os.path.exists(config_path):
+    config_path = 'config.py'
+
+# Import the config file
+if os.path.exists(config_path):
+    # Add the script directory to Python path temporarily
+    sys.path.insert(0, script_dir)
+    
+    # Read and execute the config file to get the variables
+    with open(config_path, 'r') as f:
+        config_content = f.read()
+    
+    # Execute the config content in the current globals
+    exec(config_content, globals())
+    
+    # Remove the temporary path
+    sys.path.pop(0)
+    
+    print(f"Configuration loaded from {config_path}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Script directory: {script_dir}")
+else:
+    print(f"Config file not found at {config_path}")
+    print(f"Current working directory: {os.getcwd()}")
+    print(f"Script directory: {script_dir}")
