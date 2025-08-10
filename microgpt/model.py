@@ -203,62 +203,7 @@ class MicroGPT(nn.Module):
             if hasattr(block.attn, 'bias'):
                 block.attn.bias = block.attn.bias[:,:,:block_size,:block_size]
 
-    @classmethod
-    def from_pretrained(cls, model_type, override_args=None):
-        assert model_type in {'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}
-        override_args = override_args or {} # default to empty dict
-        # only dropout can be overridden see more notes below
-        assert all(k == 'dropout' for k in override_args)
-        from transformers import GPT2LMHeadModel
-        print("loading weights from pretrained gpt: %s" % model_type)
 
-        # n_layer, n_head and n_embd are determined from model_type
-        config_args = {
-            'gpt2':         dict(n_layer=12, n_head=12, n_embd=768),  # 124M params
-            'gpt2-medium':  dict(n_layer=24, n_head=16, n_embd=1024), # 350M params
-            'gpt2-large':   dict(n_layer=36, n_head=20, n_embd=1280), # 774M params
-            'gpt2-xl':      dict(n_layer=48, n_head=25, n_embd=1600), # 1558M params
-        }[model_type]
-        print("forcing vocab_size=50257, block_size=1024, bias=True")
-        config_args['vocab_size'] = 50257 # always 50257 for GPT model checkpoints
-        config_args['block_size'] = 1024 # always 1024 for GPT model checkpoints
-        config_args['bias'] = True # always True for GPT model checkpoints
-        # we can override the dropout rate, if desired
-        if 'dropout' in override_args:
-            print(f"overriding dropout rate to {override_args['dropout']}")
-            config_args['dropout'] = override_args['dropout']
-        # create a from-scratch initialized minGPT model
-        config = MicroGPTConfig(**config_args)
-        model = MicroGPT(config)
-        sd = model.state_dict()
-        sd_keys = sd.keys()
-        sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')] # discard this mask / buffer, not a param
-
-        # init a huggingface/transformers model
-        model_hf = GPT2LMHeadModel.from_pretrained(model_type)
-        sd_hf = model_hf.state_dict()
-
-        # copy while ensuring all of the parameters are aligned and match in names and shapes
-        sd_keys_hf = sd_hf.keys()
-        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
-        sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.bias')] # same, just the mask (buffer)
-        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
-        # basically the openai checkpoints use a "Conv1D" module, but we only want to use a vanilla Linear
-        # this means that we have to transpose these weights when we import them
-        assert len(sd_keys_hf) == len(sd_keys), f"mismatched keys: {len(sd_keys_hf)} != {len(sd_keys)}"
-        for k in sd_keys_hf:
-            if any(k.endswith(w) for w in transposed):
-                # special treatment for the Conv1D weights we need to transpose
-                assert sd_hf[k].shape[::-1] == sd[k].shape
-                with torch.no_grad():
-                    sd[k].copy_(sd_hf[k].t())
-            else:
-                # vanilla copy over the other parameters
-                assert sd_hf[k].shape == sd[k].shape
-                with torch.no_grad():
-                    sd[k].copy_(sd_hf[k])
-
-        return model
 
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
         # start with all of the candidate parameters
@@ -328,3 +273,58 @@ class MicroGPT(nn.Module):
             idx = torch.cat((idx, idx_next), dim=1)
 
         return idx
+
+    @staticmethod
+    def decode_text(indices, meta_path=None):
+        """
+        Decode generated indices back to text using vocabulary mappings.
+        
+        Args:
+            indices: Tensor of shape (seq_len,) or (batch_size, seq_len)
+            meta_path: Path to meta.pkl file. If None, will try to find it in the package.
+        
+        Returns:
+            str: Decoded text (for single sequence) or list[str]: List of decoded texts (for batch)
+        """
+        import pickle
+        import os
+        
+        # If no meta_path provided, try to find it in the package
+        if meta_path is None:
+            try:
+                import microgpt
+                meta_path = os.path.join(os.path.dirname(microgpt.__file__), 'meta.pkl')
+            except ImportError:
+                raise ValueError("Could not find meta.pkl. Please provide meta_path or ensure microgpt is properly installed.")
+        
+        # Load vocabulary mappings
+        with open(meta_path, 'rb') as f:
+            meta = pickle.load(f)
+        
+        itos = meta['itos']  # integer to string mapping
+        vocab_size = meta['vocab_size']
+        
+        # Filter out invalid indices and provide warnings
+        valid_indices = []
+        invalid_count = 0
+        
+        for i in indices:
+            idx = i.item()
+            if 0 <= idx < vocab_size:
+                valid_indices.append(itos[idx])
+            else:
+                invalid_count += 1
+                # Use a fallback character for invalid indices
+                valid_indices.append('?')
+        
+        if invalid_count > 0:
+            print(f"Warning: {invalid_count} invalid indices found (outside vocabulary range 0-{vocab_size-1})")
+            print("This usually means the model needs to be trained or the vocabulary size doesn't match.")
+        
+        # Handle both single sequence and batch
+        if indices.dim() == 1:
+            # Single sequence
+            return ''.join(valid_indices)
+        else:
+            # Batch of sequences
+            return [''.join(valid_indices)]

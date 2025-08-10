@@ -124,18 +124,25 @@ config = MicroGPTConfig(
     n_layer=6,
     n_head=6, 
     n_embd=384,
-    block_size=256
+    block_size=256,
+    vocab_size=65  # Must match the vocabulary size in meta.pkl
 )
 
 # Initialize model
 model = MicroGPT(config)
 
 # Generate text
+# Note: For meaningful text generation, the model should be trained first
+# This example shows the structure, but untrained models will generate random text
 generated = model.generate(
     idx=torch.tensor([[1, 2, 3]]), 
     max_new_tokens=50,
     temperature=0.8
 )
+
+# Decode the generated text
+generated_text = MicroGPT.decode_text(generated[0])
+print(f"Generated text: {generated_text}")
 ```
 
 ### 🎭 Sampling from Trained Models

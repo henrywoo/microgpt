@@ -27,6 +27,12 @@ setup(
         "Source Code": "https://github.com/henrywoo/microgpt",
     },
     packages=find_packages(),
+    package_data={
+        'microgpt': [
+            'input.txt',
+            'meta.pkl',
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

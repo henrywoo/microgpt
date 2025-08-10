@@ -5,13 +5,13 @@ import os
 import pickle
 from contextlib import nullcontext
 import torch
-import tiktoken
+import pickle
+import os
 from microgpt.model import MicroGPTConfig, MicroGPT
 
 # -----------------------------------------------------------------------------
 # Default sampling configuration
-init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
-out_dir = 'out' # ignored if init_from is not 'resume'
+out_dir = 'out' # directory containing the checkpoint
 start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
 num_samples = 2 # number of samples to draw
 max_new_tokens = 500 # number of tokens generated in each sample
@@ -40,27 +40,22 @@ device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.aut
 ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
 ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
 
-# model
-if init_from == 'resume':
-    # init from a model saved in a specific directory
-    ckpt_path = os.path.join(out_dir, 'ckpt.pt')
-    print(f"Loading checkpoint from: {ckpt_path}")
-    if not os.path.exists(ckpt_path):
-        print(f"Error: Checkpoint not found at {ckpt_path}")
-        print(f"Make sure you have trained a model first, or check the 'out_dir' in your config")
-        exit(1)
-    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=True)
-    gptconf = MicroGPTConfig(**checkpoint['model_args'])
-    model = MicroGPT(gptconf)
-    state_dict = checkpoint['model']
-    unwanted_prefix = '_orig_mod.'
-    for k,v in list(state_dict.items()):
-        if k.startswith(unwanted_prefix):
-            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
-    model.load_state_dict(state_dict)
-elif init_from.startswith('gpt2'):
-    # init from a given GPT-2 model
-    model = MicroGPT.from_pretrained(init_from, dict(dropout=0.0))
+# model - always load from checkpoint
+ckpt_path = os.path.join(out_dir, 'ckpt.pt')
+print(f"Loading checkpoint from: {ckpt_path}")
+if not os.path.exists(ckpt_path):
+    print(f"Error: Checkpoint not found at {ckpt_path}")
+    print(f"Make sure you have trained a model first, or check the 'out_dir' in your config")
+    exit(1)
+checkpoint = torch.load(ckpt_path, map_location=device, weights_only=True)
+gptconf = MicroGPTConfig(**checkpoint['model_args'])
+model = MicroGPT(gptconf)
+state_dict = checkpoint['model']
+unwanted_prefix = '_orig_mod.'
+for k,v in list(state_dict.items()):
+    if k.startswith(unwanted_prefix):
+        state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+model.load_state_dict(state_dict)
 
 model.eval()
 model.to(device)
@@ -69,11 +64,29 @@ if compile:
 from hiq.vis import print_model
 print_model(model)
 
-# look for the meta pickle in case it is available in the dataset folder
+# Try to use the package's meta.pkl first, fall back to data directory or GPT-2 encodings
 load_meta = False
-if init_from == 'resume' and 'config' in checkpoint and 'dataset' in checkpoint['config']: # older checkpoints might not have these...
-    meta_path = os.path.join('data', checkpoint['config']['dataset'], 'meta.pkl')
-    load_meta = os.path.exists(meta_path)
+meta_path = None
+
+# First try to find meta.pkl in the package
+try:
+    import microgpt
+    package_meta_path = os.path.join(os.path.dirname(microgpt.__file__), 'meta.pkl')
+    if os.path.exists(package_meta_path):
+        meta_path = package_meta_path
+        load_meta = True
+        print(f"Using package meta.pkl from: {meta_path}")
+except ImportError:
+    pass
+
+# If not found in package, try the data directory (for backward compatibility)
+if not load_meta and 'config' in checkpoint and 'dataset' in checkpoint['config']:
+    data_meta_path = os.path.join('data', checkpoint['config']['dataset'], 'meta.pkl')
+    if os.path.exists(data_meta_path):
+        meta_path = data_meta_path
+        load_meta = True
+        print(f"Using data directory meta.pkl from: {meta_path}")
+
 if load_meta:
     print(f"Loading meta from {meta_path}...")
     with open(meta_path, 'rb') as f:
@@ -83,11 +96,10 @@ if load_meta:
     encode = lambda s: [stoi[c] for c in s]
     decode = lambda l: ''.join([itos[i] for i in l])
 else:
-    # ok let's assume gpt-2 encodings by default
-    print("No meta.pkl found, assuming GPT-2 encodings...")
-    enc = tiktoken.get_encoding("gpt2")
-    encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
-    decode = lambda l: enc.decode(l)
+    # No meta.pkl found - this is required for character-level generation
+    print("Error: No meta.pkl found. This file is required for character-level text generation.")
+    print("Please ensure meta.pkl is available in the package or data directory.")
+    exit(1)
 
 # encode the beginning of the prompt
 if start.startswith('FILE:'):
