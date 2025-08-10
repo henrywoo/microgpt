@@ -231,13 +231,6 @@ exec(open('microgpt/sample.py').read())
 "
 ```
 
-## 📊 Performance Comparison
-
-| Model | Parameters | Memory Usage | Inference Speed | Use Case |
-|-------|------------|--------------|-----------------|----------|
-| GPT-2 (124M) | 124M | ~500MB | Baseline | Server/Desktop |
-| **microGPT** | **~15M** | **~60MB** | **3-5x faster** | **Mobile/Embedded** |
-| GPT-2 Medium (350M) | 350M | ~1.4GB | 0.3x | High-performance servers |
 
 ## ⚙️ Configuration Options
 
