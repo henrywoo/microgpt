@@ -8,7 +8,7 @@
 
 ## 🎯 Overview
 
-microGPT is a lightweight implementation of GPT (Generative Pre-trained Transformer) language models, inspired by [NanoGPT](https://github.com/karpathy/nanoGPT) but following the same design philosophy as **microBERT**: **significantly reducing computational resource requirements while maintaining model performance**.
+microGPT is a lightweight implementation of GPT (Generative Pre-trained Transformer) language models, inspired by [NanoGPT](https://github.com/karpathy/nanoGPT) but following the same design philosophy as **[microBERT](https://github.com/henrywoo/microbert)**: **significantly reducing computational resource requirements while maintaining model performance**.
 
 ## ✨ Key Features
 
@@ -312,6 +312,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [NanoGPT](https://github.com/karpathy/nanoGPT) - Original codebase
 - [OpenAI GPT-2](https://github.com/openai/gpt-2) - Architecture reference
 - [Hugging Face Transformers](https://github.com/huggingface/transformers) - Implementation reference
+- [microBERT](https://github.com/henrywoo/microbert) - Design philosophy inspiration for lightweight architecture
 
 ## Contact
 
