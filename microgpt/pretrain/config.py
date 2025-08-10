@@ -2,7 +2,7 @@
 # good for debugging and playing on macbooks and such
 
 # Output directory for training checkpoints
-out_dir = "out-shakespeare-char-20250802"
+out_dir = "out"  # Default output directory
 
 # Sampling configuration
 # This out_dir is also used by sample.py for loading trained models

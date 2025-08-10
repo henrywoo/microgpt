@@ -6,11 +6,11 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Overview
+## 🎯 Overview
 
 microGPT is a lightweight implementation of GPT (Generative Pre-trained Transformer) language models, inspired by [NanoGPT](https://github.com/karpathy/nanoGPT) but following the same design philosophy as **microBERT**: **significantly reducing computational resource requirements while maintaining model performance**.
 
-## Key Features
+## ✨ Key Features
 
 ### 🎯 **Lightweight Design**
 - **Model Compression**: Significantly reduced parameter count through carefully designed architecture
@@ -22,7 +22,7 @@ microGPT is a lightweight implementation of GPT (Generative Pre-trained Transfor
 - **Fast Training**: Supports rapid prototyping and experimentation
 - **Flexible Configuration**: Adjustable model size based on hardware resources
 
-## Architecture
+## 🏗️ Architecture
 
 ### Core Components
 - **Transformer Blocks**: Standard self-attention + MLP architecture
@@ -38,12 +38,12 @@ n_embd = 384     # 384-dimensional embeddings
 block_size = 256 # 256 token context window
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Package-Based Training
 microGPT is designed to work as a standalone package. After installation, you can train models from any directory without needing the source code.
 
-### Dataset Preparation
+### 📊 Dataset Preparation
 
 microGPT comes with a built-in Shakespeare dataset for character-level language modeling. The dataset preparation script and raw text data are included in the package for easy access. The dataset preparation process:
 
@@ -52,13 +52,13 @@ microGPT comes with a built-in Shakespeare dataset for character-level language 
 3. **Splits** data into training (90%) and validation (10%) sets
 4. **Saves** processed data in `./data/shakespeare_char/` relative to your current working directory
 
-### Installation
+### 📦 Installation
 
 ```bash
 pip install -e .
 ```
 
-### Training
+### 🎓 Training
 
 #### Complete Training Workflow
 You can train microGPT from any directory using the installed package:
@@ -101,7 +101,7 @@ The training script will automatically:
 - Train using the specified hyperparameters
 - Save checkpoints and generate sample text
 
-### API Usage
+### 🔌 API Usage
 
 ```python
 from microgpt.model import GPT, GPTConfig
@@ -125,18 +125,18 @@ generated = model.generate(
 )
 ```
 
-### Sampling from Trained Models
+### 🎭 Sampling from Trained Models
 
 After training a model, you can generate text samples using the `sample.py` script. This script loads a trained checkpoint and generates text based on your specifications.
 
-#### Basic Usage
+#### 🚀 Basic Usage
 
 ```bash
 # Generate samples from a trained model
 python -m microgpt.sample
 ```
 
-**Note**: Make sure you have PyTorch installed (`pip install torch`). The repository includes a pre-trained checkpoint, so you can start generating text immediately.
+**Note**: Make sure you have PyTorch installed (`pip install torch`) and have trained a model first. You'll need to modify the `out_dir` in `microgpt/pretrain/config.py` to point to your trained model checkpoint.
 
 **Alternative**: You can also run the script directly from the source directory:
 ```bash
@@ -144,18 +144,17 @@ cd microgpt
 python sample.py
 ```
 
-**Using the included checkpoint**: The repository includes a pre-trained checkpoint. The `out_dir` is configured in `microgpt/pretrain/config.py`:
-
-```bash
-# This should work immediately with the included checkpoint
-python -m microgpt.sample
-```
-
-The script will generate Shakespeare-style text samples using the pre-trained model. To use a different checkpoint, modify the `out_dir` variable in `config.py`.
-
 **Note**: The script uses robust path resolution, so it works from any directory.
 
-#### Command Line Options
+#### Troubleshooting
+
+**"No such file or directory: 'out/ckpt.pt'" error**: This means you need to either:
+1. Train a model first using `python -m microgpt.pretrain.clm_pretrain_v0`, or
+2. Modify the `out_dir` in `microgpt/pretrain/config.py` to point to an existing checkpoint directory
+
+**"ModuleNotFoundError: No module named 'torch'"**: Install PyTorch first with `pip install torch`
+
+#### ⚙️ Command Line Options
 
 You can customize the sampling behavior by modifying the configuration variables in the script or by creating a custom config file. Here are the key parameters:
 
@@ -175,7 +174,7 @@ You can customize the sampling behavior by modifying the configuration variables
 - `dtype`: Data type (`'float32'`, `'float16'`, `'bfloat16'`)
 - `compile`: Enable PyTorch 2.0 compilation for speed (default: `False`)
 
-#### Examples
+#### 💡 Examples
 
 ```bash
 # Generate 5 samples with 1000 tokens each, using CPU
@@ -202,14 +201,14 @@ exec(open('microgpt/sample.py').read())
 "
 ```
 
-#### Custom Configuration
+#### 🔧 Custom Configuration
 
 Create a custom config file (e.g., `my_sample_config.py`) to override default settings:
 
 ```python
 # my_sample_config.py
 init_from = 'resume'
-out_dir = 'out-shakespeare-char-20250802'  # Your checkpoint directory
+out_dir = 'your_trained_model_directory'  # Your checkpoint directory
 start = "JULIET: "
 num_samples = 3
 max_new_tokens = 300
@@ -232,7 +231,7 @@ exec(open('microgpt/sample.py').read())
 "
 ```
 
-## Performance Comparison
+## 📊 Performance Comparison
 
 | Model | Parameters | Memory Usage | Inference Speed | Use Case |
 |-------|------------|--------------|-----------------|----------|
@@ -240,9 +239,9 @@ exec(open('microgpt/sample.py').read())
 | **microGPT** | **~15M** | **~60MB** | **3-5x faster** | **Mobile/Embedded** |
 | GPT-2 Medium (350M) | 350M | ~1.4GB | 0.3x | High-performance servers |
 
-## Configuration Options
+## ⚙️ Configuration Options
 
-### Model Size Adjustments
+### 📏 Model Size Adjustments
 ```python
 # Ultra-lightweight configuration
 config = GPTConfig(
@@ -261,7 +260,7 @@ config = GPTConfig(
 )
 ```
 
-### Training Parameters
+### 🎯 Training Parameters
 ```python
 # Fast training configuration
 batch_size = 32
@@ -270,7 +269,7 @@ max_iters = 2000
 eval_interval = 100
 ```
 
-## Highlights
+## 🌟 Highlights
 
 - ✅ **Lightweight Architecture**: Parameter count reduced to 1/8 of standard GPT-2
 - ✅ **Fast Inference**: Flash Attention support for 3-5x speed improvement
@@ -279,7 +278,7 @@ eval_interval = 100
 - ✅ **Resource-Friendly**: Suitable for mobile and embedded device deployment
 - ✅ **Rapid Training**: Supports fast prototyping and experimentation
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 microgpt/
@@ -292,13 +291,6 @@ microgpt/
 │       ├── clm_pretrain_v0.py # Training script
 │       ├── config.py         # Configuration management
 │       └── configurator.py   # Configuration utilities
-├── data/                     # Generated data (created during training)
-│   └── shakespeare_char/
-│       ├── train.bin         # Training data (generated)
-│       ├── val.bin           # Validation data (generated)
-│       └── meta.pkl          # Vocabulary metadata (generated)
-├── out-shakespeare-char-20250802/ # Example output directory with checkpoint
-│   └── ckpt.pt               # Trained model checkpoint
 ├── setup.py                  # Installation configuration
 └── README.md                 # Project documentation
 ```
@@ -308,7 +300,7 @@ microgpt/
 - `python -m microgpt.pretrain.clm_pretrain_v0` - Train model
 - `python -m microgpt.sample` - Generate text samples from trained model
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -318,7 +310,7 @@ We welcome contributions! Please follow these steps:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -333,7 +325,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For questions or suggestions, please:
 
 - Submit an [Issue](https://github.com/your-username/microgpt/issues)
-- Email: [your-email@example.com]
+- Email: [wufuheng@gmail.com]
 
 ---
 
