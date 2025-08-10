@@ -1,7 +1,11 @@
 # train a miniature character-level shakespeare model
 # good for debugging and playing on macbooks and such
 
+# Output directory for training checkpoints
 out_dir = "out-shakespeare-char-20250802"
+
+# Sampling configuration
+# This out_dir is also used by sample.py for loading trained models
 eval_interval = 250  # keep frequent because we'll overfit
 eval_iters = 200
 log_interval = 10  # don't print too too often

@@ -101,7 +101,8 @@ The training script will automatically:
 - Train using the specified hyperparameters
 - Save checkpoints and generate sample text
 
-### Usage
+### API Usage
+
 ```python
 from microgpt.model import GPT, GPTConfig
 
@@ -122,6 +123,113 @@ generated = model.generate(
     max_new_tokens=50,
     temperature=0.8
 )
+```
+
+### Sampling from Trained Models
+
+After training a model, you can generate text samples using the `sample.py` script. This script loads a trained checkpoint and generates text based on your specifications.
+
+#### Basic Usage
+
+```bash
+# Generate samples from a trained model
+python -m microgpt.sample
+```
+
+**Note**: Make sure you have PyTorch installed (`pip install torch`). The repository includes a pre-trained checkpoint, so you can start generating text immediately.
+
+**Alternative**: You can also run the script directly from the source directory:
+```bash
+cd microgpt
+python sample.py
+```
+
+**Using the included checkpoint**: The repository includes a pre-trained checkpoint. The `out_dir` is configured in `microgpt/pretrain/config.py`:
+
+```bash
+# This should work immediately with the included checkpoint
+python -m microgpt.sample
+```
+
+The script will generate Shakespeare-style text samples using the pre-trained model. To use a different checkpoint, modify the `out_dir` variable in `config.py`.
+
+**Note**: The script uses robust path resolution, so it works from any directory.
+
+#### Command Line Options
+
+You can customize the sampling behavior by modifying the configuration variables in the script or by creating a custom config file. Here are the key parameters:
+
+**Model Loading:**
+- `init_from`: Set to `'resume'` to load from a checkpoint directory, or specify a GPT-2 variant (e.g., `'gpt2-xl'`)
+- `out_dir`: Directory containing the checkpoint (default: `'out'`)
+
+**Generation Parameters:**
+- `start`: Starting text prompt (default: `"\n"`). Can also specify a file: `"FILE:prompt.txt"`
+- `num_samples`: Number of samples to generate (default: `2`)
+- `max_new_tokens`: Maximum tokens to generate per sample (default: `500`)
+- `temperature`: Controls randomness (default: `0.8`). Lower = more focused, higher = more creative
+- `top_k`: Top-k sampling parameter (default: `200`)
+
+**Hardware Settings:**
+- `device`: Device to run on (`'cpu'`, `'cuda'`, `'cuda:0'`, etc.)
+- `dtype`: Data type (`'float32'`, `'float16'`, `'bfloat16'`)
+- `compile`: Enable PyTorch 2.0 compilation for speed (default: `False`)
+
+#### Examples
+
+```bash
+# Generate 5 samples with 1000 tokens each, using CPU
+python -c "
+import sys
+sys.path.append('microgpt')
+from microgpt.sample import *
+num_samples = 5
+max_new_tokens = 1000
+device = 'cpu'
+exec(open('microgpt/pretrain/configurator.py').read())
+exec(open('microgpt/sample.py').read())
+"
+
+# Generate samples with custom prompt
+python -c "
+import sys
+sys.path.append('microgpt')
+from microgpt.sample import *
+start = 'ROMEO: '
+temperature = 0.9
+exec(open('microgpt/pretrain/configurator.py').read())
+exec(open('microgpt/sample.py').read())
+"
+```
+
+#### Custom Configuration
+
+Create a custom config file (e.g., `my_sample_config.py`) to override default settings:
+
+```python
+# my_sample_config.py
+init_from = 'resume'
+out_dir = 'out-shakespeare-char-20250802'  # Your checkpoint directory
+start = "JULIET: "
+num_samples = 3
+max_new_tokens = 300
+temperature = 0.7
+device = 'cpu'  # Use CPU if no GPU available
+```
+
+**Or modify the existing config**: Edit `microgpt/pretrain/config.py` to change the `out_dir` variable for permanent changes.
+
+Then run with your custom config:
+
+```bash
+python -c "
+import sys
+sys.path.append('microgpt')
+from microgpt.sample import *
+exec(open('my_sample_config.py').read())
+exec(open('microgpt/pretrain/configurator.py').read())
+exec(open('microgpt/sample.py').read())
+"
 ```
 
 ## Performance Comparison
@@ -178,9 +286,10 @@ microgpt/
 ├── microgpt/                 # Main package (installable)
 │   ├── model.py              # Core model implementation
 │   ├── prepare_dataset.py    # Dataset preparation script
+│   ├── sample.py             # Text generation script
 │   ├── input.txt             # Shakespeare text data (included)
 │   └── pretrain/
-│       ├── clm_train_v0.py  # Training script
+│       ├── clm_pretrain_v0.py # Training script
 │       ├── config.py         # Configuration management
 │       └── configurator.py   # Configuration utilities
 ├── data/                     # Generated data (created during training)
@@ -188,6 +297,8 @@ microgpt/
 │       ├── train.bin         # Training data (generated)
 │       ├── val.bin           # Validation data (generated)
 │       └── meta.pkl          # Vocabulary metadata (generated)
+├── out-shakespeare-char-20250802/ # Example output directory with checkpoint
+│   └── ckpt.pt               # Trained model checkpoint
 ├── setup.py                  # Installation configuration
 └── README.md                 # Project documentation
 ```
@@ -195,6 +306,7 @@ microgpt/
 **Usage from installed package:**
 - `python -m microgpt.prepare_dataset` - Prepare dataset
 - `python -m microgpt.pretrain.clm_pretrain_v0` - Train model
+- `python -m microgpt.sample` - Generate text samples from trained model
 
 ## Contributing
 
