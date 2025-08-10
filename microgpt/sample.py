@@ -64,28 +64,29 @@ if compile:
 from hiq.vis import print_model
 print_model(model)
 
-# Try to use the package's meta.pkl first, fall back to data directory or default encodings
+# Try to use the data directory's meta.pkl first, then fall back to package's meta.pkl
 load_meta = False
 meta_path = None
 
-# First try to find meta.pkl in the package
-try:
-    import microgpt
-    package_meta_path = os.path.join(os.path.dirname(microgpt.__file__), 'meta.pkl')
-    if os.path.exists(package_meta_path):
-        meta_path = package_meta_path
-        load_meta = True
-        print(f"Using package meta.pkl from: {meta_path}")
-except ImportError:
-    pass
-
-# If not found in package, try the data directory (for backward compatibility)
-if not load_meta and 'config' in checkpoint and 'dataset' in checkpoint['config']:
+# First try to find meta.pkl in the data directory (highest priority)
+if 'config' in checkpoint and 'dataset' in checkpoint['config']:
     data_meta_path = os.path.join('data', checkpoint['config']['dataset'], 'meta.pkl')
     if os.path.exists(data_meta_path):
         meta_path = data_meta_path
         load_meta = True
         print(f"Using data directory meta.pkl from: {meta_path}")
+
+# If not found in data directory, try the package's meta.pkl as fallback
+if not load_meta:
+    try:
+        import microgpt
+        package_meta_path = os.path.join(os.path.dirname(microgpt.__file__), 'meta.pkl')
+        if os.path.exists(package_meta_path):
+            meta_path = package_meta_path
+            load_meta = True
+            print(f"Using package meta.pkl from: {meta_path}")
+    except ImportError:
+        pass
 
 if load_meta:
     print(f"Loading meta from {meta_path}...")
@@ -98,7 +99,7 @@ if load_meta:
 else:
     # No meta.pkl found - this is required for character-level generation
     print("Error: No meta.pkl found. This file is required for character-level text generation.")
-    print("Please ensure meta.pkl is available in the package or data directory.")
+    print("Please ensure meta.pkl is available in the data directory or package.")
     exit(1)
 
 # encode the beginning of the prompt
