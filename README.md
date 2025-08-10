@@ -137,30 +137,6 @@ After training a model, you can generate text samples using the `sample.py` scri
 python -m microgpt.sample
 ```
 
-## 🌟 Highlights
-
-- ✅ **Lightweight Architecture**: Parameter count reduced to 1/8 of standard GPT-2
-- ✅ **Fast Inference**: Flash Attention support for 3-5x speed improvement
-- ✅ **Flexible Configuration**: Adjustable model size based on hardware resources
-- ✅ **Easy to Use**: Clean API design for quick adoption
-- ✅ **Resource-Friendly**: Suitable for mobile and embedded device deployment
-- ✅ **Rapid Training**: Supports fast prototyping and experimentation
-
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-
-1. Fork this repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - [NanoGPT](https://github.com/karpathy/nanoGPT) - Original codebase
@@ -172,7 +148,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions or suggestions, please:
 
-- Submit an [Issue](https://github.com/your-username/microgpt/issues)
+- Submit an [Issue](https://github.com/henrywoo/microgpt/issues)
 - Email: [wufuheng@gmail.com]
 
 ---
