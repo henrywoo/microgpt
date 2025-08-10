@@ -6,7 +6,7 @@ import pickle
 from contextlib import nullcontext
 import torch
 import tiktoken
-from microgpt.model import GPTConfig, GPT
+from microgpt.model import MicroGPTConfig, MicroGPT
 
 # -----------------------------------------------------------------------------
 # Default sampling configuration
@@ -50,8 +50,8 @@ if init_from == 'resume':
         print(f"Make sure you have trained a model first, or check the 'out_dir' in your config")
         exit(1)
     checkpoint = torch.load(ckpt_path, map_location=device, weights_only=True)
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    model = GPT(gptconf)
+    gptconf = MicroGPTConfig(**checkpoint['model_args'])
+    model = MicroGPT(gptconf)
     state_dict = checkpoint['model']
     unwanted_prefix = '_orig_mod.'
     for k,v in list(state_dict.items()):
@@ -60,12 +60,14 @@ if init_from == 'resume':
     model.load_state_dict(state_dict)
 elif init_from.startswith('gpt2'):
     # init from a given GPT-2 model
-    model = GPT.from_pretrained(init_from, dict(dropout=0.0))
+    model = MicroGPT.from_pretrained(init_from, dict(dropout=0.0))
 
 model.eval()
 model.to(device)
 if compile:
     model = torch.compile(model) # requires PyTorch 2.0 (optional)
+from hiq.vis import print_model
+print_model(model)
 
 # look for the meta pickle in case it is available in the dataset folder
 load_meta = False

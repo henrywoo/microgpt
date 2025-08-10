@@ -7,7 +7,7 @@ from contextlib import nullcontext
 import numpy as np
 import torch
 
-from microgpt.model import GPTConfig, GPT
+from microgpt.model import MicroGPTConfig, MicroGPT
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a gpt2 (124M) on OpenWebText
@@ -125,8 +125,8 @@ if init_from == 'scratch':
     # init a new model from scratch
     print("Initializing a new model from scratch")
     print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
-    gptconf = GPTConfig(**model_args)
-    model = GPT(gptconf)
+    gptconf = MicroGPTConfig(**model_args)
+    model = MicroGPT(gptconf)
 elif init_from == 'resume':
     print(f"Resuming training from {out_dir}")
     # resume training from a checkpoint.
@@ -138,8 +138,8 @@ elif init_from == 'resume':
     for k in ['n_layer', 'n_head', 'n_embd', 'block_size', 'bias', 'vocab_size']:
         model_args[k] = checkpoint_model_args[k]
     # create the model
-    gptconf = GPTConfig(**model_args)
-    model = GPT(gptconf)
+    gptconf = MicroGPTConfig(**model_args)
+    model = MicroGPT(gptconf)
     state_dict = checkpoint['model']
     # fix the keys of the state dictionary :(
     # honestly no idea how checkpoints sometimes get this prefix, have to debug more
@@ -154,7 +154,7 @@ elif init_from.startswith('gpt2'):
     print(f"Initializing from OpenAI GPT-2 weights: {init_from}")
     # initialize from OpenAI GPT-2 weights
     override_args = dict(dropout=dropout)
-    model = GPT.from_pretrained(init_from, override_args)
+    model = MicroGPT.from_pretrained(init_from, override_args)
     # read off the created config params, so we can store them into checkpoint correctly
     for k in ['n_layer', 'n_head', 'n_embd', 'block_size', 'bias', 'vocab_size']:
         model_args[k] = getattr(model.config, k)

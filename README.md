@@ -117,10 +117,10 @@ The training script will automatically:
 
 ```python
 import torch
-from microgpt.model import GPT, GPTConfig
+from microgpt.model import MicroGPT, MicroGPTConfig
 
 # Create configuration
-config = GPTConfig(
+config = MicroGPTConfig(
     n_layer=6,
     n_head=6, 
     n_embd=384,
@@ -128,7 +128,7 @@ config = GPTConfig(
 )
 
 # Initialize model
-model = GPT(config)
+model = MicroGPT(config)
 
 # Generate text
 generated = model.generate(

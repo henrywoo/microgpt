@@ -8,8 +8,8 @@ __email__ = "wufuheng@gmail.com"
 
 # Import only when the module is actually used to avoid dependency issues during package discovery
 try:
-    from .model import GPT, GPTConfig
-    __all__ = ["GPT", "GPTConfig"]
+    from .model import MicroGPT, MicroGPTConfig
+    __all__ = ["MicroGPT", "MicroGPTConfig"]
 except ImportError:
     # If dependencies aren't available, just provide the version info
     __all__ = []

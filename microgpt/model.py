@@ -106,7 +106,7 @@ class Block(nn.Module):
         return x
 
 @dataclass
-class GPTConfig:
+class MicroGPTConfig:
     block_size: int = 1024
     vocab_size: int = 50304 # GPT-2 vocab_size of 50257, padded up to nearest multiple of 64 for efficiency
     n_layer: int = 12
@@ -115,7 +115,7 @@ class GPTConfig:
     dropout: float = 0.0
     bias: bool = True # True: bias in Linears and LayerNorms, like GPT-2. False: a bit better and faster
 
-class GPT(nn.Module):
+class MicroGPT(nn.Module):
 
     def __init__(self, config):
         super().__init__()
@@ -228,8 +228,8 @@ class GPT(nn.Module):
             print(f"overriding dropout rate to {override_args['dropout']}")
             config_args['dropout'] = override_args['dropout']
         # create a from-scratch initialized minGPT model
-        config = GPTConfig(**config_args)
-        model = GPT(config)
+        config = MicroGPTConfig(**config_args)
+        model = MicroGPT(config)
         sd = model.state_dict()
         sd_keys = sd.keys()
         sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')] # discard this mask / buffer, not a param
