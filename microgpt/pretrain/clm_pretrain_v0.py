@@ -10,7 +10,6 @@ import torch
 from microgpt.model import MicroGPTConfig, MicroGPT
 
 # -----------------------------------------------------------------------------
-# default config values designed to train a character-level language model on OpenWebText
 # I/O
 out_dir = 'out'
 eval_interval = 2000
@@ -20,7 +19,7 @@ eval_only = False # if True, script exits right after the first eval
 always_save_checkpoint = True # if True, always save a checkpoint after each eval
 
 # data
-dataset = 'openwebtext'
+dataset = 'shakespeare_char'
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
 batch_size = 12 # if gradient_accumulation_steps > 1, this is the micro-batch size
 block_size = 1024
@@ -51,7 +50,26 @@ def load_config():
     """Load configuration overrides from config.py"""
     try:
         # Get the directory where this script is located
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Handle both script and notebook environments
+        try:
+            # For script environment
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            # For notebook environment - use current working directory
+            script_dir = os.getcwd()
+            # If we're in a notebook, try to find the pretrain directory
+            if 'pretrain' not in script_dir:
+                # Look for pretrain directory in current path or parent directories
+                current_dir = script_dir
+                for _ in range(3):  # Look up to 3 levels up
+                    if os.path.exists(os.path.join(current_dir, 'pretrain')):
+                        script_dir = os.path.join(current_dir, 'pretrain')
+                        break
+                    parent_dir = os.path.dirname(current_dir)
+                    if parent_dir == current_dir:  # Reached root
+                        break
+                    current_dir = parent_dir
+        
         config_path = os.path.join(script_dir, 'config.py')
         
         # Read and execute the config file

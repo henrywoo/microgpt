@@ -61,8 +61,8 @@ model.eval()
 model.to(device)
 if compile:
     model = torch.compile(model) # requires PyTorch 2.0 (optional)
-from hiq.vis import print_model
-print_model(model)
+#from hiq.vis import print_model
+#print_model(model)
 
 # Try to use the data directory's meta.pkl first, then fall back to package's meta.pkl
 load_meta = False
