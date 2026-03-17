@@ -73,6 +73,21 @@ cd microgpt
 pip install -e .
 ```
 
+
+> __20260316UPDATE__:
+
+
+There could be error to build py-itree.  To resolve it, do this:
+
+```
+sudo apt-get install zlib1g-dev build-essential -y
+pip install cmake==3.21.0
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+export CMAKE_EXECUTABLE=$(which cmake)
+pip install py-itree --no-build-isolation
+pip install py-itree --no-build-isolation
+```
+
 #### Production Installation (for users)
 ```bash
 # Install directly from PyPI
