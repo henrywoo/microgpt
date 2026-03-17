@@ -77,14 +77,13 @@ pip install -e .
 > __20260316UPDATE__:
 
 
-There could be error to build py-itree.  To resolve it, do this:
+There could be error when running above command(when building py-itree).  To resolve it, do this:
 
-```
+```bash
 sudo apt-get install zlib1g-dev build-essential -y
 pip install cmake==3.21.0
 export CMAKE_POLICY_VERSION_MINIMUM=3.5
 export CMAKE_EXECUTABLE=$(which cmake)
-pip install py-itree --no-build-isolation
 pip install py-itree --no-build-isolation
 ```
 
